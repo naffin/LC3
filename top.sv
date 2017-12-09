@@ -2,10 +2,8 @@
 //
 
 module top(
-	//input [15:0] mdrout,
-	inout [15:0] buss,
+	inout [15:0] Buss,
 	input rst, clk
-	// add inputs here, depends on how memory is implemented
 	);
 	reg enaMARM, enaPC, enaMDR, enaALU,
 	  flagWE, ldIR, ldPC, selEAB1,
@@ -14,38 +12,38 @@ module top(
 	reg [2:0] DR, SR1, SR2;
 	reg [1:0] ALUctrl;	
 	wire N, Z, P, TB;
-	wire [15:0] eabout, ra, rb;
-	wire [15:0] pcout, aluout;
-	wire [15:0] IR, marmuxout, mdrout;
+	wire [15:0] eabOut, Ra, Rb;
+	wire [15:0] PCOut, ALUOut;
+	wire [15:0] IR, MARMUXOut, mdrOut;
 	wire [7:0] zext;
 	reg selMDR, ldMDR, ldMAR, memWE;
 
 	assign zext =  {{8{IR[7]}}, IR[7:0]};
-	assign marmuxout = (selMAR) ? zext : eabout;
+	assign MARMUXOut = (selMAR) ? zext : eabOut;
 
 	pc pc_1 (.*);
-	eab eab_1(.ir(ir[10:0]), .pc(pcout), .*);
-	regfile8x16 regfile(.*, .writeen(regwe), .wraddr(dr), .wrdata(buss), .rdaddra(sr1),
-		 .rdaddrb(sr2), .rddataa(ra), .rddatab(rb));
+	eab eab_1(.IR(IR[10:0]), .PC(PCOut), .*);
+	regfile8x16 regfile(.*, .writeEN(regWE), .wrAddr(DR), .wrData(Buss), .rdAddrA(SR1),
+		 .rdAddrB(SR2), .rdDataA(Ra), .rdDataB(Rb));
 	nzp nzp_1 (.*);
-	alu alu_1(.ir(ir[4:0]), .ir_5(ir[5]), .*);
+	alu alu_1(.IR(IR[4:0]), .IR_5(IR[5]), .*);
 	ir ir_1(.*);
-	memory my_mem(.mdrout(mdrout), .reset(rst), .*);
+	memory my_mem(.reset(rst), .*);
 
 	//===========================
 	// tri-state buffers
 	//===========================
 	
-	ts_driver tsd_1(.din(marmuxout), .dout(buss), .en(enaMARM));
-	ts_driver tsd_2(.din(pcout), .dout(buss), .en(enaPC));
-	ts_driver tsd_3(.din(aluout), .dout(buss), .en(enaALU));
-	ts_driver tsd_4(.din(mdrout), .dout(buss), .en(enaMDR));
+	ts_driver tsd_1(.din(MARMUXOut), .dout(Buss), .en(enaMARM));
+	ts_driver tsd_2(.din(PCOut), .dout(Buss), .en(enaPC));
+	ts_driver tsd_3(.din(ALUOut), .dout(Buss), .en(enaALU));
+	ts_driver tsd_4(.din(mdrOut), .dout(Buss), .en(enaMDR));
 	
 	parameter size = 5;
-	//reg [size-1:0] state, next_state = 5'b00000;
 
-	typedef enum {IDLE, FET0, FET1, FET2, DECODE, AND, ADD, NOT,
-				JSR0, JSR1, JSRR1, BR, LD0, LD1, LD2, ST0, ST1, ST2, JMP, TRAP} state, next_state;
+	typedef enum {IDLE, FET0, FET1, FET2, DECODE, AND, ADD, NOT, 
+				JSR0, JSR1, JSRR1, BR, LD0, LD1, LD2, ST0, ST1, ST2, JMP, TRAP0, TRAP1, TRAP2} state_type;
+	state_type state, next_state; 
 
 	wire [3:0] opCode;
 	assign opCode = IR[15:12];
@@ -76,7 +74,7 @@ module top(
 						4'b1100:	next_state = JMP; 
 						4'b1101:	next_state = FET0; // RESERVED, treat as a NOP; 
 						4'b1110:	next_state = FET0; // not implemented LEA; 
-						4'b1111:	next_state = TRAP; // not implemented TRAP; 
+						4'b1111:	next_state = TRAP0; 
 						default: 	next_state = FET0;
 					endcase 
 		ADD: 		next_state = FET0;
@@ -96,7 +94,7 @@ module top(
 			end
 		JSR1: 		next_state = FET0;
 		JSRR1: 		next_state = FET0;
-		TRAP: 		next_state = FET0;
+		TRAP0: 		next_state = FET0;
 		
 	   default : next_state = FET0;
 	  endcase
@@ -188,7 +186,7 @@ module top(
 					// send address to memory
 					selEAB2 <= 2'b10; 	// load in sign extended PCoffset9
 					selEAB1 <= 1'b0;  	// load in current PC
-					selMAR <= 1'b0; 	// select output of PC+PCoffset9 to drive buss
+					selMAR <= 1'b0; 	// select output of PC+PCoffset9 to drive Buss
 					enaMARM <= 1'b1;	
 					ldMAR <= 1'b1;
 				end
@@ -208,7 +206,7 @@ module top(
 					// send address to memory
 					selEAB2 <= 2'b10; 	// load in sign extended PCoffset9
 					selEAB1 <= 1'b0;  	// load in current PC
-					selMAR <= 1'b0; 	// select output of PC+PCoffset9 to drive buss
+					selMAR <= 1'b0; 	// select output of PC+PCoffset9 to drive Buss
 					enaMARM <= 1'b1;	
 					ldMAR <= 1'b1;
 				end
@@ -216,7 +214,7 @@ module top(
 					// write data from regfile to memory
 					enaALU <= 1'b1;		
 					ALUctrl <= 2'b11;
-					selMDR <= 1'b0;		// sel data from buss
+					selMDR <= 1'b0;		// sel data from Buss
 					ldMDR  <= 1'b1;	
 					SR1 <= IR[11:9];
 				end
@@ -253,7 +251,7 @@ module top(
 					selEAB2 <= 2'b00;		
 					ldPC <= 1'b1;	
 				end
-			TRAP:begin 
+			TRAP0:begin 
 					selPC <= 2'b01;
 					selEAB1 <= 1'b1;	
 					selEAB2 <= 2'b00;		
