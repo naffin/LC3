@@ -16,7 +16,8 @@
 ############################################################################
 
 VERILOG_FILES = memory.v regfile8x16.sv eab.v ir.v pc.sv nzp.v ts_driver.v marmux.v mux4_1.v mux2_1.v alu.sv top.sv top_tb.sv
-TOPLEVEL = top_tb
+ASSERTION_FILES = bindfiles.sv lc3_asserts.sv
+TOPLEVEL = top_tb bindfiles
 
 help:
 	@echo "Make targets:"
@@ -33,7 +34,7 @@ VCS_FLAGS = -sverilog -debug  -l comp.log
 vcs:	simv
 		./simv -l sim.log
 
-simv:   ${VERILOG_FILES} clean
+simv:   ${VERILOG_FILES} ${ASSERTION_FILES} clean
 		mkdir work
 		vlogan ${VCS_FLAGS} ${VERILOG_FILES}
 		vcs ${TOPLEVEL}
