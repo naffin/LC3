@@ -47,10 +47,10 @@ questa_gui:
 		vlog ${VERILOG_FILES} 
 		vsim -novopt -coverage -t ps -do "view wave;do wave.do;run -all" ${TOPLEVEL}
 
-questa_batch: ${VERILOG_FILES} clean
+questa_batch: ${VERILOG_FILES} ${ASSERTION_FILES} clean
 		vlib work
 		vmap work work
-		vlog -sv ${VERILOG_FILES}
+		vlog -sv ${VERILOG_FILES} ${ASSERTION_FILES}
 		vsim -c -coverage -t ps -novopt -do "run -all" ${TOPLEVEL}
 
 #############################################################################

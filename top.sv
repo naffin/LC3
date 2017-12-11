@@ -273,13 +273,13 @@ module top(
 			ST2:begin
 					memWE <= 1'b1;
 				end
-			BR:begin
+			BR0:begin
 					selPC <= 2'b01;
 					selEAB2 <= 2'b10;		
 					selEAB1 <= 1'b0;	
 					ldPC <= TB;	
 				end
-			JMP:begin 
+			JMP0:begin 
 					SR1 <= IR[8:6];
 					selPC <= 2'b01;
 					selEAB2 <= 2'b00;		
